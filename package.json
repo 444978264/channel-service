@@ -1,0 +1,31 @@
+{
+  "name": "channel-service",
+  "version": "0.0.1",
+  "repository": "https://github.com/444978264/channel-service.git",
+  "author": "444978264 <444978264@qq.com>",
+  "license": "MIT",
+  "main": "lib/bundle.cjs.js",
+  "module": "lib/bundle.esm.js",
+  "browser": "lib/bundle.browser.js",
+  "types": "types/index.d.ts",
+  "scripts": {
+    "build": "rollup -c",
+    "build:types": "tsc",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^18.0.0",
+    "@rollup/plugin-typescript": "^8.2.1",
+    "@types/jest": "^26.0.22",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "eslint": "^7.24.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "jest": "^26.6.3",
+    "rollup": "^2.45.2",
+    "rollup-plugin-node-resolve": "^5.2.0",
+    "ts-jest": "^26.5.4",
+    "typescript": "^4.2.4"
+  }
+}
