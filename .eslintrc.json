@@ -4,12 +4,8 @@
         "es2021": true,
         "node": true
     },
-    "extends": [
-        "plugin:@typescript-eslint/recommended",
-        "prettier/@typescript-eslint",
-        "plugin:prettier/recommended"
-    ],
-    "plugins": ["@typescript-eslint", "prettier"],
+    "extends": ["plugin:@typescript-eslint/recommended", "prettier", "plugin:prettier/recommended"],
+    "plugins": ["@typescript-eslint"],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 12,
@@ -19,6 +15,7 @@
         "prettier/prettier": "error",
         "no-redeclare": "off",
         "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-namespace": "off",
         "@typescript-eslint/explicit-function-return-type": "off"
     }
 }
