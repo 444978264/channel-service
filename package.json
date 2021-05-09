@@ -14,7 +14,7 @@
         "build:types": "tsc",
         "start": "rollup -c -w",
         "test": "jest",
-        "lint": "eslint --fix",
+        "lint": "eslint --fix utils",
         "prepare": "husky install"
     },
     "devDependencies": {
