@@ -4,3 +4,5 @@ export interface Event {
 }
 
 namespace Event {}
+
+class Emitter {}
