@@ -48,7 +48,8 @@ export default {
         }),
         livereload(),
         serve({
-            // open: true,
+            open: true,
+            openPage: 'example/index.html',
             contentBase: '.',
         }),
     ],
