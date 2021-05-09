@@ -15,6 +15,7 @@ if(typeof window !== 'undefined') {
 
 export default {
     input: './packages/index.ts',
+    extensions: ['.js', '.ts', '.json'],
     output: [
         {
             file: pkg.main,
@@ -37,8 +38,8 @@ export default {
         },
     ],
     plugins: [
-        json(),
         typescript(),
+        json(),
         commonjs(),
         resolve(),
         terser(),
@@ -47,8 +48,8 @@ export default {
         }),
         livereload(),
         serve({
-            open: true,
-            contentBase: 'dist',
+            // open: true,
+            contentBase: '.',
         }),
     ],
 };
