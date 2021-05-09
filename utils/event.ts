@@ -1,6 +1,6 @@
 export interface Event {
     addEventListener(): void;
-    releaseEvents(): void;
+    removeEvents(): void;
 }
 
 namespace Event {}
