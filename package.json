@@ -8,6 +8,7 @@
     "module": "lib/bundle.esm.js",
     "browser": "lib/bundle.browser.js",
     "types": "types/index.d.ts",
+    "private": false,
     "scripts": {
         "build": "rollup -c",
         "build:types": "tsc",
