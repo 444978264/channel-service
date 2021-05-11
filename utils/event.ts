@@ -60,6 +60,12 @@ export namespace Event {
         });
         return emitter.event;
     }
+
+    export function pickMap(data: any[] | Record<string, any>, key: string) {
+        return key.split('.').reduce((v, k) => {
+            return v && Reflect.has(v, k) ? Reflect.get(v, k) : undefined;
+        }, data);
+    }
 }
 
 type IListener<T = any> = [(d: T) => void, any];

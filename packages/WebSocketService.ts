@@ -6,6 +6,7 @@ interface ISocketResponse<T> {
 }
 
 export interface ISocketServiceConfig<T> {
+    cache?: {namespace: string};
     resultSelector?(e: any): T;
 }
 
