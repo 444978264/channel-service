@@ -7,6 +7,7 @@ interface ISocketResponse<T> {
 
 export interface ISocketServiceConfig<T> {
     cache?: {namespace: string};
+    autoReconnect?: boolean;
     resultSelector?(e: any): T;
 }
 
@@ -37,6 +38,11 @@ export class SocketService<T> extends Service {
                     d.dispose();
                 });
                 this.disposables.clear();
+                if (this._opt.autoReconnect) {
+                    this._sender = new WebSocket(this._sender.url);
+                    // todo 解绑
+                    this._init();
+                }
             }),
         );
     }
