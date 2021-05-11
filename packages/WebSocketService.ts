@@ -11,14 +11,10 @@ export interface ISocketServiceConfig<T> {
 }
 
 export class SocketService<T> extends Service {
-    public onMessage = Event.from<T>(this._sender, 'message', d => {
-        return (
-            this._opt.resultSelector?.(d.data) || this.resultSelector(d.data)
-        );
-    });
-    public onError = Event.from<T>(this._sender, 'error');
-    private _onOpen = Event.from<T>(this._sender, 'open');
-    private _onClose = Event.from<T>(this._sender, 'close');
+    public onMessage!: Event<T>;
+    public onError!: Event<T>;
+    private _onOpen!: Event<T>;
+    private _onClose!: Event<T>;
     private disposables: IDisposables = new Set();
     private _onReadyHandle: (() => any)[] = [];
     constructor(
@@ -26,6 +22,7 @@ export class SocketService<T> extends Service {
         private _opt: ISocketServiceConfig<T> = {},
     ) {
         super();
+        this._init();
         this.disposables.add(
             this._onOpen(() => {
                 while (this._onReadyHandle.length) {
@@ -34,7 +31,6 @@ export class SocketService<T> extends Service {
                 }
             }),
         );
-
         this.disposables.add(
             this._onClose(() => {
                 this.disposables.forEach(d => {
@@ -43,6 +39,20 @@ export class SocketService<T> extends Service {
                 this.disposables.clear();
             }),
         );
+    }
+
+    _init() {
+        if (this._sender) {
+            this.onMessage = Event.from<T>(this._sender, 'message', d => {
+                return (
+                    this._opt.resultSelector?.(d.data) ||
+                    this.resultSelector(d.data)
+                );
+            });
+            this.onError = Event.from<T>(this._sender, 'error');
+            this._onOpen = Event.from<T>(this._sender, 'open');
+            this._onClose = Event.from<T>(this._sender, 'close');
+        }
     }
 
     private resultSelector(d: string) {
