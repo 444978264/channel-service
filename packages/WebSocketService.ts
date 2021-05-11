@@ -1,8 +1,8 @@
-import {Event, IDisposables} from '../utils/event';
+import {Event, IDisposables, IDispose} from '../utils/event';
 import {Service} from './ServiceManager';
 
 interface ISocketResponse<T> {
-    subscribe(d: (c: T) => void): void;
+    subscribe(d: (c: T) => void): IDispose;
 }
 
 export interface ISocketServiceConfig<T> {
@@ -98,11 +98,13 @@ export class SocketService<T> extends Service {
                 const message = event(function (e) {
                     callback(e);
                 });
-                return () => {
-                    if (unsubMsg) {
-                        this._send(unsubMsg);
-                    }
-                    message.dispose();
+                return {
+                    dispose: () => {
+                        if (unsubMsg) {
+                            this._onReady(() => this._send(unsubMsg));
+                        }
+                        message.dispose();
+                    },
                 };
             },
         };
