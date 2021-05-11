@@ -1,12 +1,15 @@
 export interface IDispose {
     dispose(): void;
 }
+
+export type IDisposables = Set<IDispose>;
+
 export type Event<T = any> = (
     listener: (e: T) => any,
     thisArgs?: any,
     disposables?: any,
 ) => IDispose;
-export interface ISender<T> {
+export interface ISender<T = any> {
     addEventListener(channel: string, listener: (e: T) => void): void;
     removeEventListener(channel: string, dispose: (e: T) => void): void;
 }
@@ -14,7 +17,7 @@ export namespace Event {
     export function from<T>(
         sender: ISender<T>,
         channel: string,
-        map: (...args: any[]) => T,
+        map: (...args: any[]) => T = d => d,
     ): Event<T> {
         const listenFn = (...args: any[]) => emitter.fire(map(...args));
         const emitter = new Emitter<T>({
@@ -32,7 +35,6 @@ export namespace Event {
         event: Event<T>,
         callback: (e: T) => boolean,
     ): Event<T> {
-        debugger;
         return snapshot(
             (listener: (d: T) => IDispose, thisArgs = null, disposables?) => {
                 return event(
@@ -48,7 +50,6 @@ export namespace Event {
 
     export function snapshot<T>(event: Event<T>): Event<T> {
         let listener: IDispose;
-        debugger;
         const emitter = new Emitter<T>({
             onFirstAdd() {
                 listener = event(emitter.fire, emitter);
@@ -67,8 +68,7 @@ interface IEmitter {
     onLastRemove?(): void;
 }
 export class Emitter<T> implements IDispose {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    private static readonly _noop = function () {};
+    static readonly NOOP = function () {};
     private _deliverQueue = new Set<IListener>();
     private _event: Event<T> | null = null;
     private _disposed = false;
@@ -90,7 +90,7 @@ export class Emitter<T> implements IDispose {
                 const result = {
                     dispose: () => {
                         if (this._disposed) return;
-                        result.dispose = Emitter._noop;
+                        result.dispose = Emitter.NOOP;
                         this._deliverQueue.delete(params);
                         if (!this._deliverQueue.size) {
                             this.options.onLastRemove?.();
