@@ -32,11 +32,12 @@ export namespace Event {
         event: Event<T>,
         callback: (e: T) => boolean,
     ): Event<T> {
+        debugger;
         return snapshot(
             (listener: (d: T) => IDispose, thisArgs = null, disposables?) => {
                 return event(
                     function (e) {
-                        callback(e) && listener(e);
+                        callback(e) && listener.call(thisArgs, e);
                     },
                     thisArgs,
                     disposables,
@@ -47,6 +48,7 @@ export namespace Event {
 
     export function snapshot<T>(event: Event<T>): Event<T> {
         let listener: IDispose;
+        debugger;
         const emitter = new Emitter<T>({
             onFirstAdd() {
                 listener = event(emitter.fire, emitter);
@@ -73,11 +75,11 @@ export class Emitter<T> implements IDispose {
     constructor(private options: IEmitter = {}) {}
     get event(): Event<T> {
         if (this._event === null) {
-            this._event = function (
+            this._event = (
                 listener: (e: T) => any,
                 thisArgs: any = undefined,
                 disposables?: any,
-            ) {
+            ) => {
                 if (!this._deliverQueue.size) {
                     this.options.onFirstAdd?.();
                 }
