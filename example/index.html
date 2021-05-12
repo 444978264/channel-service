@@ -9,19 +9,37 @@
     <body></body>
     <script src="../dist/bundle.browser.js"></script>
     <script>
-        // const socket = new WebSocket('ws://121.40.165.18:8800');
-        // socket.addEventListener('message', res => {
-        //     console.log(res, 'message');
-        // });
-        // socket.addEventListener('open', res => {
-        //     socket.send(
-        //         JSON.stringify({
-        //             channel: 'hello',
-        //             params: {
-        //                 name: 'cyf',
-        //             },
-        //         }),
-        //     );
-        // });
+        const socket = window.channelService.SocketService.create(
+            'wss://fstream.binance.com/stream',
+        );
+
+        // socket
+        //     .once(
+        //         {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
+        //         d => d.id === '2',
+        //     )
+        //     .subscribe(function (res) {
+        //         console.log(res, 'once');
+        //     });
+
+        socket
+            .on({
+                subMsg: {
+                    method: 'SUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 1,
+                },
+                filter(d) {
+                    return d.stream === 'ltcusdt@kline_1d';
+                },
+                unsubMsg: {
+                    method: 'UNSUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 4,
+                },
+            })
+            .subscribe(function (d) {
+                console.log(d, 'subscribe');
+            });
     </script>
 </html>
