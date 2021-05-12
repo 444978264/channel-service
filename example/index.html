@@ -11,6 +11,13 @@
     <script>
         const socket = window.channelService.SocketService.create(
             'wss://fstream.binance.com/stream',
+            {
+                autoConnect: true,
+                adapter(url) {
+                    console.log(url, 'adapter');
+                    return new WebSocket(url);
+                },
+            },
         );
 
         // socket

@@ -9,10 +9,12 @@ export type Event<T = any> = (
     thisArgs?: any,
     disposables?: any,
 ) => IDispose;
+
 export interface ISender<T = any> {
     addEventListener(channel: string, listener: (e: T) => void): void;
     removeEventListener(channel: string, dispose: (e: T) => void): void;
 }
+
 export namespace Event {
     export function from<T>(
         sender: ISender<T>,

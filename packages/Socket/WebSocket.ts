@@ -11,16 +11,34 @@ export enum SOCKET_STATUS {
     message = 'message',
 }
 
+export enum ADAPTER_STATUS {
+    CONNECTING,
+    OPEN,
+    CLOSING,
+    CLOSED,
+}
+
+type IAdapterEvent = 'message' | 'close' | 'error' | 'open';
+
+interface IAdapter {
+    addEventListener(type: IAdapterEvent, callback: (e: any) => void): void;
+    removeEventListener(type: IAdapterEvent, callback: (e: any) => void): void;
+    close(code?: number, reason?: string): void;
+    readyState: ADAPTER_STATUS; // the same as WebSocket.readyState's value
+    send(data: any): void;
+}
+
 export interface ISocketCoreConfig {
     autoReconnect?: boolean;
     autoConnect?: boolean;
     duration?: number;
     resultSelector?(e: any): any;
+    adapter?<T extends IAdapter>(url: string): T;
 }
 
 export class SocketCore {
     public static SOCKET_STATUS = SOCKET_STATUS;
-    private _socket: WebSocket | null = null;
+    private _socket: IAdapter | null = null;
     public connected = false;
     public disconnected = true;
     private _onReadyHandle: (() => any)[] = [];
@@ -53,14 +71,22 @@ export class SocketCore {
             this.connect();
         }
     }
+
     private resultSelector(d: string) {
         return JSON.parse(d);
     }
+
     connect() {
         if (this._socket === null) {
-            this._socket = new WebSocket(this._url);
-            this._listen(this._socket);
-            this.hooks.emit(SOCKET_STATUS.connecting);
+            try {
+                this._socket =
+                    this._config.adapter?.(this._url) ??
+                    new WebSocket(this._url);
+                this._listen(this._socket);
+                this.hooks.emit(SOCKET_STATUS.connecting);
+            } catch (e) {
+                console.error(e);
+            }
         }
         return this;
     }
@@ -72,14 +98,14 @@ export class SocketCore {
         }
     }
 
-    private _listen(instance: WebSocket) {
+    private _listen(instance: IAdapter) {
         instance.addEventListener('open', this._open);
         instance.addEventListener('message', this._message);
         instance.addEventListener('close', this._close);
         instance.addEventListener('error', this._error);
     }
 
-    private _dispose(instance: WebSocket | null) {
+    private _dispose(instance: IAdapter | null) {
         if (instance) {
             instance.removeEventListener('open', this._open);
             instance.removeEventListener('message', this._message);
@@ -89,7 +115,7 @@ export class SocketCore {
     }
 
     private _onReady(cbk: () => any) {
-        if (this._socket?.readyState === WebSocket.OPEN) {
+        if (this._socket?.readyState === ADAPTER_STATUS.OPEN) {
             return cbk();
         }
         this._onReadyHandle.push(cbk);
