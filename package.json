@@ -4,6 +4,11 @@
     "repository": "https://github.com/444978264/channel-service.git",
     "author": "444978264 <444978264@qq.com>",
     "license": "MIT",
+    "keywords": [
+        "websocket",
+        "channel",
+        "channel service"
+    ],
     "main": "dist/bundle.cjs.js",
     "module": "dist/bundle.esm.js",
     "browser": "dist/bundle.browser.js",
