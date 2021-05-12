@@ -84,7 +84,7 @@ export class Emitter<T> implements IDispose {
             this._event = (
                 listener: (e: T) => any,
                 thisArgs: any = undefined,
-                disposables?: any,
+                disposables?: IDisposables,
             ) => {
                 if (!this._deliverQueue.size) {
                     this.options.onFirstAdd?.();
@@ -98,11 +98,19 @@ export class Emitter<T> implements IDispose {
                         if (this._disposed) return;
                         result.dispose = Emitter.NOOP;
                         this._deliverQueue.delete(params);
+                        if (disposables) {
+                            disposables.delete(result);
+                        }
                         if (!this._deliverQueue.size) {
                             this.options.onLastRemove?.();
                         }
                     },
                 };
+
+                if (disposables) {
+                    disposables.add(result);
+                }
+
                 return result;
             };
         }
@@ -122,6 +130,39 @@ export class Emitter<T> implements IDispose {
             this._disposed = true;
             this._deliverQueue.clear();
             this.options.onLastRemove?.();
+        }
+    }
+}
+
+export class EventEmitter<T extends string | number | symbol>
+    implements IDispose {
+    private _eventMap = {} as Record<T, Emitter<any>>;
+    private _disposables = new Set<IDispose>();
+
+    public on<R>(event: T, callback: (d?: R) => void): IDispose {
+        if (!Reflect.has(this._eventMap, event)) {
+            this._eventMap[event] = new Emitter({
+                onLastRemove: () => {
+                    Reflect.deleteProperty(this._eventMap, event);
+                },
+            });
+        }
+        return this._eventMap[event].event(callback, null, this._disposables);
+    }
+
+    public emit<R>(event: T, data?: R) {
+        if (this._eventMap[event]) this._eventMap[event].fire(data);
+    }
+
+    public get(event: T): Emitter<any> {
+        return this._eventMap[event];
+    }
+
+    public dispose() {
+        if (this._disposables.size) {
+            this._disposables.forEach(d => {
+                d.dispose();
+            });
         }
     }
 }
