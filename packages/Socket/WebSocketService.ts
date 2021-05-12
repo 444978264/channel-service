@@ -1,75 +1,66 @@
-import {Event, IDisposables, IDispose} from '../utils/event';
-import {Service} from './ServiceManager';
+import {Event, IDisposables, IDispose} from '../../utils/event';
+import {Service} from '../ServiceManager';
+import {ISocketCoreConfig, SocketCore, SOCKET_STATUS} from './WebSocket';
 
 interface ISocketResponse<T> {
     subscribe(d: (c: T) => void): IDispose;
 }
 
-export interface ISocketServiceConfig<T> {
+export interface ISocketServiceConfig {
     cache?: {namespace: string};
-    autoReconnect?: boolean;
-    resultSelector?(e: any): T;
 }
 
-export class SocketService<T> extends Service {
-    public onMessage!: Event<T>;
-    public onError!: Event<T>;
-    private _onOpen!: Event<T>;
-    private _onClose!: Event<T>;
+export class SocketService extends Service {
     private disposables: IDisposables = new Set();
     private _onReadyHandle: (() => any)[] = [];
     constructor(
-        private _sender: WebSocket,
-        private _opt: ISocketServiceConfig<T> = {},
+        private _sender: SocketCore,
+        private _opt: ISocketServiceConfig = {},
     ) {
         super();
-        this._init();
         this.disposables.add(
-            this._onOpen(() => {
+            this.onConnect(() => {
                 while (this._onReadyHandle.length) {
                     const handle = this._onReadyHandle.shift();
                     handle && handle();
                 }
             }),
         );
-        this.disposables.add(
-            this._onClose(() => {
-                this.disposables.forEach(d => {
-                    d.dispose();
-                });
-                this.disposables.clear();
-                if (this._opt.autoReconnect) {
-                    this._sender = new WebSocket(this._sender.url);
-                    // todo 解绑
-                    this._init();
-                }
-            }),
-        );
     }
 
-    _init() {
-        if (this._sender) {
-            this.onMessage = Event.from<T>(this._sender, 'message', d => {
-                return (
-                    this._opt.resultSelector?.(d.data) ||
-                    this.resultSelector(d.data)
-                );
-            });
-            this.onError = Event.from<T>(this._sender, 'error');
-            this._onOpen = Event.from<T>(this._sender, 'open');
-            this._onClose = Event.from<T>(this._sender, 'close');
+    static create(url: string, opts?: ISocketCoreConfig) {
+        return new SocketService(new SocketCore(url, opts));
+    }
+
+    private _eventInit(type: SOCKET_STATUS) {
+        if (!this._sender.hooks.get(type)) {
+            this._sender.hooks.register(type);
         }
+        return this._sender.hooks.get(type).event;
     }
 
-    private resultSelector(d: string) {
-        return JSON.parse(d);
+    private get _onMessage(): Event {
+        return this._eventInit(SOCKET_STATUS.message);
     }
 
-    private _onReady(cbk: () => any) {
-        if (this._sender.readyState === WebSocket.OPEN) {
-            return cbk();
-        }
-        this._onReadyHandle.push(cbk);
+    private get _onError(): Event {
+        return this._eventInit(SOCKET_STATUS.error);
+    }
+
+    public onMessage<T>(callback: (d: T) => void): IDispose {
+        return this._onMessage(callback);
+    }
+
+    public onError(callback: (e: any) => void): IDispose {
+        return this._onError(callback);
+    }
+
+    public onConnect(callback: () => void): IDispose {
+        return this._sender.hooks.on(SOCKET_STATUS.connect, callback);
+    }
+
+    public onDisconnect(callback: (e: any) => void): IDispose {
+        return this._sender.hooks.on(SOCKET_STATUS.disconnect, callback);
     }
 
     call(name: string) {
@@ -81,8 +72,8 @@ export class SocketService<T> extends Service {
     }
 
     send(params: any): Event {
-        this._onReady(() => this._send(params));
-        return this.onMessage;
+        this._send(params);
+        return this._onMessage;
     }
 
     once<T>(params: any, filter?: (d: T) => boolean): ISocketResponse<T> {
@@ -118,7 +109,7 @@ export class SocketService<T> extends Service {
                 return {
                     dispose: () => {
                         if (unsubMsg) {
-                            this._onReady(() => this._send(unsubMsg));
+                            this._send(unsubMsg);
                         }
                         message.dispose();
                     },

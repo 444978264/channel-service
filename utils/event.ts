@@ -139,15 +139,27 @@ export class EventEmitter<T extends string | number | symbol>
     private _eventMap = {} as Record<T, Emitter<any>>;
     private _disposables = new Set<IDispose>();
 
-    public on<R>(event: T, callback: (d?: R) => void): IDispose {
-        if (!Reflect.has(this._eventMap, event)) {
-            this._eventMap[event] = new Emitter({
-                onLastRemove: () => {
-                    Reflect.deleteProperty(this._eventMap, event);
-                },
-            });
+    public register(event: T): Emitter<any> {
+        if (Reflect.has(this._eventMap, event)) {
+            throw Error(
+                'cannot register the same event; please change another one to resolve this question',
+            );
         }
-        return this._eventMap[event].event(callback, null, this._disposables);
+        const emitter = new Emitter({
+            onLastRemove: () => {
+                Reflect.deleteProperty(this._eventMap, event);
+            },
+        });
+        this._eventMap[event] = emitter;
+        return emitter;
+    }
+
+    public on<R = any>(event: T, callback: (d: R) => void): IDispose {
+        return (this._eventMap[event] ?? this.register(event)).event(
+            callback,
+            null,
+            this._disposables,
+        );
     }
 
     public emit<R>(event: T, data?: R) {

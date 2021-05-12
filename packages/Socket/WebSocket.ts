@@ -1,24 +1,20 @@
-/**
- * Created by cyf on 2020-07-08.
- * 创建 websocket
- */
-
-import {EventEmitter} from '../utils/event';
+import {EventEmitter} from '../../utils/event';
 
 export enum SOCKET_STATUS {
-    beforeSend,
-    beforeMessage,
-    connect,
-    disconnect,
-    error,
-    reconnect,
-    connecting,
-    message,
+    beforeSend = 'beforeSend',
+    beforeMessage = 'beforeMessage',
+    connect = 'connect',
+    disconnect = 'disconnect',
+    error = 'error',
+    reconnect = 'reconnect',
+    connecting = 'connecting',
+    message = 'message',
 }
 
 export interface ISocketCoreConfig {
     autoReconnect?: boolean;
     autoConnect?: boolean;
+    duration?: number;
     resultSelector?(e: any): any;
 }
 
@@ -30,7 +26,12 @@ export class SocketCore {
     private _onReadyHandle: (() => any)[] = [];
     static DESTROY_CODE = 1000;
     public readonly hooks = new EventEmitter<SOCKET_STATUS>();
-    constructor(private _url: string, private _config: ISocketCoreConfig = {}) {
+    constructor(
+        private _url: string,
+        private _config: ISocketCoreConfig = {
+            autoConnect: true,
+        },
+    ) {
         this.hooks.on(SOCKET_STATUS.connect, () => {
             this.connected = true;
             this.disconnected = !this.connected;
@@ -41,6 +42,11 @@ export class SocketCore {
             this.disconnected = !this.connected;
             this._dispose(this._socket);
             this._socket = null;
+            if (this._config.autoConnect) {
+                setTimeout(() => {
+                    this.connect();
+                }, this._config.duration || 3000);
+            }
         });
 
         if (this._config.autoConnect) {
@@ -59,9 +65,10 @@ export class SocketCore {
         return this;
     }
 
-    public destroy() {
+    public close() {
         if (this.connected && this._socket) {
             this._socket.close(SocketCore.DESTROY_CODE, '正常关闭');
+            this.hooks.dispose();
         }
     }
 
