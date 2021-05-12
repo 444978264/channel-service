@@ -12,20 +12,11 @@ export interface ISocketServiceConfig {
 
 export class SocketService extends Service {
     private disposables: IDisposables = new Set();
-    private _onReadyHandle: (() => any)[] = [];
     constructor(
         private _sender: SocketCore,
         private _opt: ISocketServiceConfig = {},
     ) {
         super();
-        this.disposables.add(
-            this.onConnect(() => {
-                while (this._onReadyHandle.length) {
-                    const handle = this._onReadyHandle.shift();
-                    handle && handle();
-                }
-            }),
-        );
     }
 
     static create(url: string, opts?: ISocketCoreConfig) {
