@@ -119,9 +119,15 @@
             .then(res => res.json())
             .then(res => {
                 console.log(res, 'fetchTest');
-            });
+            })
+            .catch();
 
         fetchTest.abort();
-        console.log(request, cancelTokenFactory, 'CancelTokenFactory');
+
+        console.log(
+            cancelTokenFactory2,
+            cancelTokenFactory,
+            'CancelTokenFactory',
+        );
     </script>
 </html>
