@@ -10,11 +10,7 @@
     <script src="../dist/bundle.browser.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const {
-            SocketService,
-            CancelTokenFactory,
-            CancelToken,
-        } = window.channelService;
+        const {SocketService, CancelTokenFactory} = window.channelService;
         const socket = SocketService.create(
             'wss://fstream.binance.com/stream',
             {
@@ -55,17 +51,13 @@
         //         console.log(d, 'subscribe');
         //     });
 
-        const cancelTokenFactory = new CancelTokenFactory(
-            new CancelToken({
-                createCancelToken() {
-                    const source = axios.CancelToken.source();
-                    return {
-                        cancelToken: source.token,
-                        abort: source.cancel,
-                    };
-                },
-            }),
-        );
+        const cancelTokenFactory = CancelTokenFactory.create(function () {
+            const source = axios.CancelToken.source();
+            return {
+                cancelToken: source.token,
+                abort: source.cancel,
+            };
+        });
 
         const Ajax = cancelTokenFactory.withCancelToken(axios.request);
 
@@ -89,18 +81,14 @@
         //  cancel this ajax request;
         axiosTest.abort('cancel');
 
-        const cancelTokenFactory2 = new CancelTokenFactory(
-            new CancelToken({
-                createCancelToken() {
-                    const source = new AbortController();
-                    console.log(source, 'AbortController');
-                    return {
-                        signal: source.signal,
-                        abort: source.abort.bind(source),
-                    };
-                },
-            }),
-        );
+        const cancelTokenFactory2 = CancelTokenFactory.create(function () {
+            const source = new AbortController();
+            console.log(source, 'AbortController');
+            return {
+                signal: source.signal,
+                abort: source.abort.bind(source),
+            };
+        });
 
         function ajax(params) {
             const {url, ...other} = params;

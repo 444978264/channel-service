@@ -1,4 +1,4 @@
-import {ICancelToken, CancelToken} from './CancelToken';
+import {ICancelToken, CancelToken, ICancelTokenConfig} from './CancelToken';
 
 export interface ICancelRequest<T = any> {
     then: Promise<T>['then'];
@@ -12,6 +12,15 @@ interface IWithCancelToken {
 }
 
 export class CancelTokenFactory {
+    static create(
+        callback: ICancelTokenConfig['createCancelToken'],
+    ): CancelTokenFactory {
+        return new CancelTokenFactory(
+            new CancelToken({
+                createCancelToken: callback,
+            }),
+        );
+    }
     constructor(private CancelToken?: CancelToken) {}
     withCancelToken<T>(request: IWithCancelToken) {
         if (!(this.CancelToken instanceof CancelToken)) {
