@@ -1,2 +1,3 @@
 export * from './ServiceManager';
-export * from './Socket/index';
+export * from './Socket';
+export * from './CancelToken';
