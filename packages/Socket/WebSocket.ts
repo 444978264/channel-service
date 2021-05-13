@@ -32,25 +32,38 @@ export interface ISocketCoreConfig {
     autoReconnect?: boolean;
     autoConnect?: boolean;
     duration?: number;
+    maxRetry?: number;
     resultSelector?(e: any): any;
     adapter?<T extends IAdapter>(url: string): T;
 }
 
+const DEFAULT_CONFIG = {
+    autoReconnect: true,
+    autoConnect: true,
+    maxRetry: 5,
+    duration: 3000,
+    resultSelector(d: string) {
+        return JSON.parse(d);
+    },
+};
+
 export class SocketCore {
     public static SOCKET_STATUS = SOCKET_STATUS;
+    static DESTROY_CODE = 1000;
     private _socket: IAdapter | null = null;
     public connected = false;
     public disconnected = true;
+    private _config: ISocketCoreConfig;
+    private _retryCount = 0;
     private _onReadyHandle: (() => any)[] = [];
-    static DESTROY_CODE = 1000;
     public readonly hooks = new EventEmitter<SOCKET_STATUS>();
-    constructor(
-        private _url: string,
-        private _config: ISocketCoreConfig = {
-            autoConnect: true,
-        },
-    ) {
+    constructor(private _url: string, _config?: ISocketCoreConfig) {
+        this._config = {
+            ...DEFAULT_CONFIG,
+            ..._config,
+        };
         this.hooks.on(SOCKET_STATUS.connect, () => {
+            this._retryCount = 0;
             this.connected = true;
             this.disconnected = !this.connected;
         });
@@ -63,7 +76,7 @@ export class SocketCore {
             if (this._config.autoConnect) {
                 setTimeout(() => {
                     this.connect();
-                }, this._config.duration || 3000);
+                }, this._config.duration || DEFAULT_CONFIG.duration);
             }
         });
 
@@ -77,16 +90,25 @@ export class SocketCore {
     }
 
     connect() {
-        if (this._socket === null) {
+        if (
+            this._socket === null &&
+            this._retryCount <=
+                (this._config.maxRetry || DEFAULT_CONFIG.maxRetry)
+        ) {
             try {
                 this._socket =
                     this._config.adapter?.(this._url) ??
                     new WebSocket(this._url);
                 this._listen(this._socket);
+                this._retryCount++;
                 this.hooks.emit(SOCKET_STATUS.connecting);
             } catch (e) {
                 console.error(e);
             }
+        } else {
+            throw Error(
+                'The number of retry connections has reached the limit，please check your network',
+            );
         }
         return this;
     }
