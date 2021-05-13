@@ -38,13 +38,18 @@ export default {
         },
     ],
     plugins: [
-        typescript(),
-        json(),
-        commonjs(),
+        commonjs({
+            include: 'node_modules/**/*',
+        }),
         resolve(),
+        json(),
+        typescript(),
         terser(),
         babel({
             exclude: 'node_modules/**',
+            namedExports: {
+                axios: ['useState', 'Component', 'useRef', 'useEffect'],
+            },
         }),
         livereload(),
         serve({

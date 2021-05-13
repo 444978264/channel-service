@@ -8,8 +8,14 @@
     </head>
     <body></body>
     <script src="../dist/bundle.browser.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const socket = window.channelService.SocketService.create(
+        const {
+            SocketService,
+            CancelTokenFactory,
+            CancelToken,
+        } = window.channelService;
+        const socket = SocketService.create(
             'wss://fstream.binance.com/stream',
             {
                 autoConnect: true,
@@ -29,24 +35,93 @@
         //         console.log(res, 'once');
         //     });
 
-        socket
-            .on({
-                subMsg: {
-                    method: 'SUBSCRIBE',
-                    params: ['ltcusdt@kline_1d'],
-                    id: 1,
+        // socket
+        //     .on({
+        //         subMsg: {
+        //             method: 'SUBSCRIBE',
+        //             params: ['ltcusdt@kline_1d'],
+        //             id: 1,
+        //         },
+        //         filter(d) {
+        //             return d.stream === 'ltcusdt@kline_1d';
+        //         },
+        //         unsubMsg: {
+        //             method: 'UNSUBSCRIBE',
+        //             params: ['ltcusdt@kline_1d'],
+        //             id: 4,
+        //         },
+        //     })
+        //     .subscribe(function (d) {
+        //         console.log(d, 'subscribe');
+        //     });
+
+        const cancelTokenFactory = new CancelTokenFactory(
+            new CancelToken({
+                createCancelToken() {
+                    const source = axios.CancelToken.source();
+                    return {
+                        cancelToken: source.token,
+                        abort: source.cancel,
+                    };
                 },
-                filter(d) {
-                    return d.stream === 'ltcusdt@kline_1d';
+            }),
+        );
+
+        const Ajax = cancelTokenFactory.withCancelToken(axios.request);
+
+        const axiosTest = Ajax({
+            url: '/repos/444978264/channel-service/pulls',
+            baseURL: 'https://api.github.com',
+            params: {
+                per_page: 1,
+            },
+        });
+
+        axiosTest.then(
+            function (res) {
+                console.log(res, 'res');
+            },
+            function (err) {
+                console.log(err, 'err');
+            },
+        );
+
+        //  cancel this ajax request;
+        axiosTest.abort('cancel');
+
+        const cancelTokenFactory2 = new CancelTokenFactory(
+            new CancelToken({
+                createCancelToken() {
+                    const source = new AbortController();
+                    console.log(source, 'AbortController');
+                    return {
+                        signal: source.signal,
+                        abort: source.abort.bind(source),
+                    };
                 },
-                unsubMsg: {
-                    method: 'UNSUBSCRIBE',
-                    params: ['ltcusdt@kline_1d'],
-                    id: 4,
-                },
-            })
-            .subscribe(function (d) {
-                console.log(d, 'subscribe');
+            }),
+        );
+
+        function ajax(params) {
+            const {url, ...other} = params;
+            return fetch(url, other);
+        }
+
+        const api = cancelTokenFactory2.withCancelToken(ajax);
+
+        const fetchTest = api({
+            url:
+                'https://api.github.com/repos/444978264/channel-service/pulls?per_page=1',
+            method: 'get',
+        });
+
+        fetchTest
+            .then(res => res.json())
+            .then(res => {
+                console.log(res, 'fetchTest');
             });
+
+        fetchTest.abort();
+        console.log(request, cancelTokenFactory, 'CancelTokenFactory');
     </script>
 </html>
