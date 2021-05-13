@@ -157,9 +157,10 @@ export class SocketCore {
 
     public send(params: any) {
         if (!this._socket) {
-            throw Error(
-                'make sure the websocket is connected, there is no websocket instance!',
-            );
+            this.connect();
+            // throw Error(
+            //     'make sure the websocket is connected, there is no websocket instance!',
+            // );
         }
         this._onReady(() => {
             if (this.hooks.get(SOCKET_STATUS.beforeSend)) {
