@@ -47,9 +47,6 @@ export default {
         terser(),
         babel({
             exclude: 'node_modules/**',
-            namedExports: {
-                axios: ['useState', 'Component', 'useRef', 'useEffect'],
-            },
         }),
         livereload(),
         serve({
