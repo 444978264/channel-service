@@ -54,6 +54,10 @@ export class SocketService extends Service {
         return this._sender.hooks.on(SOCKET_STATUS.disconnect, callback);
     }
 
+    public onReconnect(callback: (e: any) => void): IDispose {
+        return this._sender.hooks.on(SOCKET_STATUS.reconnect, callback);
+    }
+
     call(name: string) {
         return Promise.resolve(name);
     }

@@ -75,6 +75,7 @@ export class SocketCore {
             this._socket = null;
             if (this._config.autoConnect) {
                 setTimeout(() => {
+                    this.hooks.emit(SOCKET_STATUS.reconnect);
                     this.connect();
                 }, this._config.duration || DEFAULT_CONFIG.duration);
             }
