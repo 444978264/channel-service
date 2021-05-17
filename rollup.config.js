@@ -1,4 +1,4 @@
-import typescript from '@rollup/plugin-typescript';
+import typescript from 'rollup-plugin-typescript2';
 import resolve from 'rollup-plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
 import json from 'rollup-plugin-json';
@@ -15,7 +15,7 @@ if(typeof window !== 'undefined') {
 
 export default {
     input: './packages/index.ts',
-    extensions: ['.js', '.ts', '.json'],
+    // extensions: ['.js', '.ts', '.json'],
     output: [
         {
             file: pkg.main,
@@ -38,12 +38,14 @@ export default {
         },
     ],
     plugins: [
+        json(),
+        typescript({
+            useTsconfigDeclarationDir: true,
+        }),
         commonjs({
             include: 'node_modules/**/*',
         }),
         resolve(),
-        json(),
-        typescript(),
         terser(),
         babel({
             exclude: 'node_modules/**',
