@@ -12,7 +12,7 @@
     "main": "dist/bundle.cjs.js",
     "module": "dist/bundle.esm.js",
     "browser": "dist/bundle.browser.js",
-    "types": "types/packages/index.d.ts",
+    "types": "types/index.d.ts",
     "private": false,
     "files": [
         "types"

@@ -15,7 +15,7 @@ if(typeof window !== 'undefined') {
 }`;
 
 export default {
-    input: './packages/index.ts',
+    input: './index.ts',
     // extensions: ['.js', '.ts', '.json'],
     output: [
         {

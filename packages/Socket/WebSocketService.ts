@@ -23,7 +23,7 @@ export class SocketService extends Service {
         return new SocketService(new SocketCore(url, opts));
     }
 
-    private _eventInit(type: SOCKET_STATUS) {
+    public event(type: SOCKET_STATUS) {
         if (!this._sender.hooks.get(type)) {
             this._sender.hooks.register(type);
         }
@@ -31,11 +31,11 @@ export class SocketService extends Service {
     }
 
     private get _onMessage(): Event {
-        return this._eventInit(SOCKET_STATUS.message);
+        return this.event(SOCKET_STATUS.message);
     }
 
     private get _onError(): Event {
-        return this._eventInit(SOCKET_STATUS.error);
+        return this.event(SOCKET_STATUS.error);
     }
 
     public onMessage<T>(callback: (d: T) => void): IDispose {

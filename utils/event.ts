@@ -63,6 +63,26 @@ export namespace Event {
         return emitter.event;
     }
 
+    export function debounceTime<T>(time: number, event: Event<T>): Event<T> {
+        let timer: any = null;
+        return snapshot(
+            (listener: (d: T) => IDispose, thisArgs = null, disposables?) => {
+                return event(
+                    function (e) {
+                        if (timer === null) {
+                            clearTimeout(timer);
+                        }
+                        timer = setTimeout(() => {
+                            listener.call(thisArgs, e);
+                        });
+                    },
+                    thisArgs,
+                    disposables,
+                );
+            },
+        );
+    }
+
     export function pickMap(data: any[] | Record<string, any>, key: string) {
         return key.split('.').reduce((v, k) => {
             return v && Reflect.has(v, k) ? Reflect.get(v, k) : undefined;
