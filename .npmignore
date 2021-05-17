@@ -17,4 +17,4 @@ example
 .eslintrc.json
 
 !dist
-!types
+!types/**/*

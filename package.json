@@ -1,6 +1,6 @@
 {
     "name": "channel-service",
-    "version": "0.0.9",
+    "version": "0.0.10",
     "repository": "https://github.com/444978264/channel-service.git",
     "author": "444978264 <444978264@qq.com>",
     "license": "MIT",
@@ -14,6 +14,9 @@
     "browser": "dist/bundle.browser.js",
     "types": "types/packages/index.d.ts",
     "private": false,
+    "files": [
+        "types"
+    ],
     "scripts": {
         "build": "rollup -c",
         "build:types": "tsc",
