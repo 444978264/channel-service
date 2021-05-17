@@ -90,37 +90,6 @@ export class SocketCore {
         return JSON.parse(d);
     }
 
-    connect() {
-        if (
-            this._socket === null &&
-            this._retryCount <=
-                (this._config.maxRetry || DEFAULT_CONFIG.maxRetry)
-        ) {
-            try {
-                this._socket =
-                    this._config.adapter?.(this._url) ??
-                    new WebSocket(this._url);
-                this._listen(this._socket);
-                this._retryCount++;
-                this.hooks.emit(SOCKET_STATUS.connecting);
-            } catch (e) {
-                console.error(e);
-            }
-        } else {
-            throw Error(
-                'The number of retry connections has reached the limit，please check your network',
-            );
-        }
-        return this;
-    }
-
-    public close() {
-        if (this.connected && this._socket) {
-            this._socket.close(SocketCore.DESTROY_CODE, '正常关闭');
-            this.hooks.dispose();
-        }
-    }
-
     private _listen(instance: IAdapter) {
         instance.addEventListener('open', this._open);
         instance.addEventListener('message', this._message);
@@ -196,5 +165,42 @@ export class SocketCore {
                 this._socket?.send(params);
             }
         });
+    }
+
+    connect() {
+        if (
+            this._socket === null &&
+            this._retryCount <=
+                (this._config.maxRetry || DEFAULT_CONFIG.maxRetry)
+        ) {
+            try {
+                this._socket =
+                    this._config.adapter?.(this._url) ??
+                    new WebSocket(this._url);
+                this._listen(this._socket);
+                this._retryCount++;
+                this.hooks.emit(SOCKET_STATUS.connecting);
+            } catch (e) {
+                console.error(e);
+            }
+        } else {
+            throw Error(
+                'The number of retry connections has reached the limit，please check your network',
+            );
+        }
+        return this;
+    }
+
+    public disconnect() {
+        if (this.connected && this._socket) {
+            this._socket.close(SocketCore.DESTROY_CODE, '正常关闭');
+        }
+        return this;
+    }
+
+    public dispose() {
+        this._dispose(this._socket);
+        this.hooks.dispose();
+        return this;
     }
 }

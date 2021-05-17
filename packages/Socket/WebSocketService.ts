@@ -62,16 +62,19 @@ export class SocketService extends Service {
         return Promise.resolve(name);
     }
 
-    _send(params: any) {
+    private _send(params: any) {
         this._sender.send(JSON.stringify(params));
     }
 
-    send(params: any): Event {
+    public send(params: any): Event {
         this._send(params);
         return this._onMessage;
     }
 
-    once<T>(params: any, filter?: (d: T) => boolean): ISocketResponse<T> {
+    public once<T>(
+        params: any,
+        filter?: (d: T) => boolean,
+    ): ISocketResponse<T> {
         const event = filter
             ? Event.filter(this.send(params), filter)
             : this.send(params);
@@ -84,7 +87,7 @@ export class SocketService extends Service {
         };
     }
 
-    on<T>({
+    public on<T>({
         subMsg,
         filter,
         unsubMsg,
@@ -112,8 +115,18 @@ export class SocketService extends Service {
             },
         };
     }
+    public disconnect() {
+        this._sender.disconnect();
+        return this;
+    }
 
-    dispose() {
-        this._sender.close();
+    public connect() {
+        this._sender.connect();
+        return this;
+    }
+
+    public dispose() {
+        this._sender.dispose();
+        return this;
     }
 }
