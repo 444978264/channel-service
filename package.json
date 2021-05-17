@@ -1,6 +1,6 @@
 {
     "name": "channel-service",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "repository": "https://github.com/444978264/channel-service.git",
     "author": "444978264 <444978264@qq.com>",
     "license": "MIT",
@@ -12,11 +12,12 @@
     "main": "dist/bundle.cjs.js",
     "module": "dist/bundle.esm.js",
     "browser": "dist/bundle.browser.js",
-    "types": "types/index.d.ts",
+    "types": "types/packages/index.d.ts",
     "private": false,
     "scripts": {
         "build": "rollup -c",
         "build:types": "tsc",
+        "release": "yarn build:types && yarn build",
         "start": "rollup -c -w",
         "test": "jest",
         "lint": "eslint --fix utils/*",
@@ -47,6 +48,7 @@
         "rollup-plugin-node-resolve": "^5.2.0",
         "rollup-plugin-serve": "^1.1.0",
         "rollup-plugin-terser": "^7.0.2",
+        "rollup-plugin-typescript2": "^0.30.0",
         "ts-jest": "^26.5.4",
         "typescript": "^4.2.4"
     },
