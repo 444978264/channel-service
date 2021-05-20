@@ -20,8 +20,8 @@
     "scripts": {
         "build": "rollup -c",
         "build:types": "tsc",
-        "release": "yarn build:types && yarn build",
-        "start": "rollup -c -w",
+        "release": "cross-env NODE_ENV=production yarn build:types && yarn build",
+        "start": "cross-env NODE_ENV=development rollup -c -w",
         "test": "jest",
         "lint": "eslint --fix utils/*",
         "prepare": "husky install"
@@ -38,6 +38,7 @@
         "@types/jest": "^26.0.22",
         "@typescript-eslint/eslint-plugin": "^4.22.0",
         "@typescript-eslint/parser": "^4.22.0",
+        "cross-env": "^7.0.3",
         "eslint": "^7.24.0",
         "eslint-config-airbnb-base": "^14.2.1",
         "eslint-config-prettier": "^8.2.0",

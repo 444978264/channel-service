@@ -14,6 +14,18 @@ if(typeof window !== 'undefined') {
   window._CHANNEL_SERVICE_VERSION_ = '${pkg.version}'
 }`;
 
+const plugins =
+    process.env.NODE_ENV === 'development'
+        ? [
+              livereload(),
+              serve({
+                  open: true,
+                  openPage: 'example/index.html',
+                  contentBase: '.',
+              }),
+          ]
+        : [];
+
 export default {
     input: './index.ts',
     // extensions: ['.js', '.ts', '.json'],
@@ -53,11 +65,6 @@ export default {
         babel({
             exclude: 'node_modules/**',
         }),
-        livereload(),
-        serve({
-            open: true,
-            openPage: 'example/index.html',
-            contentBase: '.',
-        }),
+        ...plugins,
     ],
 };
