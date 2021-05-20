@@ -40,7 +40,6 @@ export default {
     ],
     plugins: [
         json(),
-        typescript(),
         // typescript2
         // typescript({
         //     useTsconfigDeclarationDir: true,
@@ -50,6 +49,7 @@ export default {
         }),
         resolve(),
         terser(),
+        typescript(),
         babel({
             exclude: 'node_modules/**',
         }),

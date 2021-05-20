@@ -73,7 +73,7 @@ export class SocketCore {
             this.disconnected = !this.connected;
             this._dispose(this._socket);
             this._socket = null;
-            if (this._config.autoConnect) {
+            if (this._config.autoReconnect) {
                 setTimeout(() => {
                     this.hooks.emit(SOCKET_STATUS.reconnect);
                     this.connect();
@@ -81,9 +81,7 @@ export class SocketCore {
             }
         });
 
-        if (this._config.autoConnect) {
-            this.connect();
-        }
+        this._config.autoConnect && this.connect();
     }
 
     private resultSelector(d: string) {

@@ -22,102 +22,114 @@
             },
         );
 
-        // socket
-        //     .once(
-        //         {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
-        //         d => d.id === '2',
-        //     )
-        //     .subscribe(function (res) {
-        //         console.log(res, 'once');
-        //     });
-
-        // socket
-        //     .on({
-        //         subMsg: {
-        //             method: 'SUBSCRIBE',
-        //             params: ['ltcusdt@kline_1d'],
-        //             id: 1,
-        //         },
-        //         filter(d) {
-        //             return d.stream === 'ltcusdt@kline_1d';
-        //         },
-        //         unsubMsg: {
-        //             method: 'UNSUBSCRIBE',
-        //             params: ['ltcusdt@kline_1d'],
-        //             id: 4,
-        //         },
-        //     })
-        //     .subscribe(function (d) {
-        //         console.log(d, 'subscribe');
-        //     });
-
-        const cancelTokenFactory = CancelTokenFactory.create(function () {
-            const source = axios.CancelToken.source();
-            return {
-                cancelToken: source.token,
-                abort: source.cancel,
-            };
+        socket.onConnect(function () {
+            console.log('网络连接成功');
         });
 
-        const Ajax = cancelTokenFactory.withCancelToken(axios.request);
-
-        const axiosTest = Ajax({
-            url: '/repos/444978264/channel-service/pulls',
-            baseURL: 'https://api.github.com',
-            params: {
-                per_page: 1,
-            },
+        socket.onDisconnect(function () {
+            console.log('网络断开啦!');
         });
 
-        axiosTest.then(
-            function (res) {
-                console.log(res, 'res');
-            },
-            function (err) {
-                console.log(err, 'err');
-            },
-        );
-
-        //  cancel this ajax request;
-        axiosTest.abort('cancel');
-
-        const cancelTokenFactory2 = CancelTokenFactory.create(function () {
-            const source = new AbortController();
-            console.log(source, 'AbortController');
-            return {
-                signal: source.signal,
-                abort: source.abort.bind(source),
-            };
+        socket.onReconnect(function () {
+            console.log('网络正在重连...');
         });
 
-        function ajax(params) {
-            const {url, ...other} = params;
-            return fetch(url, other);
-        }
-
-        const api = cancelTokenFactory2.withCancelToken(ajax);
-
-        const fetchTest = api({
-            url:
-                'https://api.github.com/repos/444978264/channel-service/pulls?per_page=1',
-            method: 'get',
-        });
-
-        fetchTest
-            .then(res => res.json())
-            .then(res => {
-                console.log(res, 'fetchTest');
-            })
-            .catch(err => {
-                console.log(err, 'fetch');
+        socket
+            .once(
+                {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
+                d => d.id === '2',
+            )
+            .subscribe(function (res) {
+                console.log(res, 'once');
             });
 
-        fetchTest.abort();
+        socket
+            .on({
+                subMsg: {
+                    method: 'SUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 1,
+                },
+                filter(d) {
+                    return d.stream === 'ltcusdt@kline_1d';
+                },
+                unsubMsg: {
+                    method: 'UNSUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 4,
+                },
+            })
+            .subscribe(function (d) {
+                console.log(d, 'subscribe');
+            });
 
-        console.log(
-            cancelTokenFactory2,
-            cancelTokenFactory,
-            'CancelTokenFactory',
-        );
+        // const cancelTokenFactory = CancelTokenFactory.create(function () {
+        //     const source = axios.CancelToken.source();
+        //     return {
+        //         cancelToken: source.token,
+        //         abort: source.cancel,
+        //     };
+        // });
+
+        // const Ajax = cancelTokenFactory.withCancelToken(axios.request);
+
+        // const axiosTest = Ajax({
+        //     url: '/repos/444978264/channel-service/pulls',
+        //     baseURL: 'https://api.github.com',
+        //     params: {
+        //         per_page: 1,
+        //     },
+        // });
+
+        // axiosTest.then(
+        //     function (res) {
+        //         console.log(res, 'res');
+        //     },
+        //     function (err) {
+        //         console.log(err, 'err');
+        //     },
+        // );
+
+        // //  cancel this ajax request;
+        // axiosTest.abort('cancel');
+
+        // const cancelTokenFactory2 = CancelTokenFactory.create(function () {
+        //     const source = new AbortController();
+        //     console.log(source, 'AbortController');
+        //     return {
+        //         signal: source.signal,
+        //         abort: source.abort.bind(source),
+        //     };
+        // });
+
+        // function ajax(params) {
+        //     const {url, ...other} = params;
+        //     return fetch(url, other);
+        // }
+
+        // const api = cancelTokenFactory2.withCancelToken(ajax);
+
+        // const fetchTest = api({
+        //     url:
+        //         'https://api.github.com/repos/444978264/channel-service/pulls?per_page=1',
+        //     method: 'get',
+        // });
+
+        // fetchTest
+        //     .then(res => res.json())
+        //     .then(res => {
+        //         console.log(res, 'fetchTest');
+        //     })
+        //     .catch(err => {
+        //         console.log(err, 'fetch');
+        //     });
+
+        // fetchTest.abort();
+
+        // console.log(
+        //     cancelTokenFactory2,
+        //     cancelTokenFactory,
+        //     'CancelTokenFactory',
+        // );
     </script>
 </html>
