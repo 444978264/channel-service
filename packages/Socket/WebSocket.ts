@@ -76,7 +76,8 @@ export class SocketCore {
             this._socket = null;
             if (this._config.autoReconnect) {
                 setTimeout(() => {
-                    this.hooks.emit(SOCKET_STATUS.reconnect);
+                    this._retryCount++;
+                    this.hooks.emit(SOCKET_STATUS.reconnect, this._retryCount);
                     this.connect();
                 }, this._config.duration || DEFAULT_CONFIG.duration);
             }
@@ -149,9 +150,6 @@ export class SocketCore {
     public send(params: any) {
         if (!this._socket) {
             this.connect();
-            // throw Error(
-            //     'make sure the websocket is connected, there is no websocket instance!',
-            // );
         }
         this._onReady(() => {
             if (this.hooks.get(SOCKET_STATUS.beforeSend)) {
@@ -174,7 +172,7 @@ export class SocketCore {
                     this._config.adapter?.(this._url) ??
                     new WebSocket(this._url);
                 this._listen(this._socket);
-                this.hooks.emit(SOCKET_STATUS.connecting, ++this._retryCount);
+                this.hooks.emit(SOCKET_STATUS.connecting);
             } else {
                 throw new ReconnectTimeError(
                     'The number of retry connections has reached the limit，please check your network',

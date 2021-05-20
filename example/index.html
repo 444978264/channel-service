@@ -10,17 +10,28 @@
     <script src="../dist/bundle.browser.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const {SocketService, CancelTokenFactory} = window.channelService;
+        const {
+            SocketService,
+            CancelTokenFactory,
+            TimeOutError,
+            ReconnectTimeError,
+        } = window.channelService;
+
         const socket = SocketService.create(
-            'wss://fstream.binance.com/stream',
-            {
-                autoConnect: true,
-                adapter(url) {
-                    console.log(url, 'adapter');
-                    return new WebSocket(url);
-                },
-            },
+            'wss://api-dev.bitcharm.com/ws/api/v1',
+            {maxRetry: 0},
         );
+
+        // const socket = SocketService.create(
+        //     'wss://fstream.binance.com/stream',
+        //     {
+        //         autoConnect: true,
+        //         adapter(url) {
+        //             console.log(url, 'adapter');
+        //             return new WebSocket(url);
+        //         },
+        //     },
+        // );
 
         socket.onConnect(function () {
             console.log('网络连接成功');
@@ -33,35 +44,43 @@
         socket.onReconnect(function () {
             console.log('网络正在重连...');
         });
+        socket.onReconnect(function (time) {
+            console.log('网络正在重连...', time);
+        });
 
-        socket
-            .once(
-                {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
-                d => d.id === '2',
-            )
-            .subscribe(function (res) {
-                console.log(res, 'once');
-            });
+        socket.onError(function (err) {
+            console.dir(err);
+            console.log(ReconnectTimeError.is(err), err);
+        });
 
-        socket
-            .on({
-                subMsg: {
-                    method: 'SUBSCRIBE',
-                    params: ['ltcusdt@kline_1d'],
-                    id: 1,
-                },
-                filter(d) {
-                    return d.stream === 'ltcusdt@kline_1d';
-                },
-                unsubMsg: {
-                    method: 'UNSUBSCRIBE',
-                    params: ['ltcusdt@kline_1d'],
-                    id: 4,
-                },
-            })
-            .subscribe(function (d) {
-                console.log(d, 'subscribe');
-            });
+        // socket
+        //     .once(
+        //         {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
+        //         d => d.id === '2',
+        //     )
+        //     .subscribe(function (res) {
+        //         console.log(res, 'once');
+        //     });
+
+        // socket
+        //     .on({
+        //         subMsg: {
+        //             method: 'SUBSCRIBE',
+        //             params: ['ltcusdt@kline_1d'],
+        //             id: 1,
+        //         },
+        //         filter(d) {
+        //             return d.stream === 'ltcusdt@kline_1d';
+        //         },
+        //         unsubMsg: {
+        //             method: 'UNSUBSCRIBE',
+        //             params: ['ltcusdt@kline_1d'],
+        //             id: 4,
+        //         },
+        //     })
+        //     .subscribe(function (d) {
+        //         console.log(d, 'subscribe');
+        //     });
 
         // const cancelTokenFactory = CancelTokenFactory.create(function () {
         //     const source = axios.CancelToken.source();

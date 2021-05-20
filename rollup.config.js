@@ -60,7 +60,11 @@ export default {
             include: 'node_modules/**/*',
         }),
         resolve(),
-        terser(),
+        terser({
+            // compress: {
+            //     pure_funcs: ['console.log'],
+            // },
+        }),
         typescript(),
         babel({
             exclude: 'node_modules/**',
