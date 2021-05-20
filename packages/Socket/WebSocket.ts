@@ -1,4 +1,5 @@
 import {EventEmitter} from '../../utils/event';
+import {TimeRangeError} from './Error';
 
 export enum SOCKET_STATUS {
     beforeSend = 'beforeSend',
@@ -166,26 +167,20 @@ export class SocketCore {
     }
 
     connect() {
-        if (
-            this._socket === null &&
-            this._retryCount <=
-                (this._config.maxRetry || DEFAULT_CONFIG.maxRetry)
-        ) {
-            try {
+        this._catchError(() => {
+            const maxRetry = this._config.maxRetry ?? DEFAULT_CONFIG.maxRetry;
+            if (this._socket === null && this._retryCount <= maxRetry) {
                 this._socket =
                     this._config.adapter?.(this._url) ??
                     new WebSocket(this._url);
                 this._listen(this._socket);
-                this._retryCount++;
-                this.hooks.emit(SOCKET_STATUS.connecting);
-            } catch (e) {
-                console.error(e);
+                this.hooks.emit(SOCKET_STATUS.connecting, ++this._retryCount);
+            } else {
+                throw new TimeRangeError(
+                    'The number of retry connections has reached the limit，please check your network',
+                );
             }
-        } else {
-            throw Error(
-                'The number of retry connections has reached the limit，please check your network',
-            );
-        }
+        });
         return this;
     }
 
@@ -200,5 +195,13 @@ export class SocketCore {
         this._dispose(this._socket);
         this.hooks.dispose();
         return this;
+    }
+
+    private _catchError(callback: (...args: any[]) => any) {
+        try {
+            callback();
+        } catch (error) {
+            this.hooks.emit(SOCKET_STATUS.error, error);
+        }
     }
 }
