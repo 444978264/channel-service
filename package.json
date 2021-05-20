@@ -1,6 +1,6 @@
 {
     "name": "channel-service",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "repository": "https://github.com/444978264/channel-service.git",
     "author": "444978264 <444978264@qq.com>",
     "license": "MIT",
@@ -21,7 +21,7 @@
         "watch": "rollup -c -w",
         "build": "rollup -c",
         "build:types": "tsc",
-        "release": "cross-env NODE_ENV=production yarn build:types && yarn build",
+        "release": "cross-env NODE_ENV=production yarn build:types && yarn build && npm publish",
         "start": "cross-env NODE_ENV=development rollup -c -w",
         "test": "jest",
         "lint": "eslint --fix utils/*",
