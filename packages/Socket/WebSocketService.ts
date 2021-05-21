@@ -80,9 +80,11 @@ export class SocketService extends Service {
             : this.send(params);
         return {
             subscribe(callback: (d: T) => void) {
-                return event(function (e) {
+                const listener = event(function (e) {
                     callback(e);
+                    listener.dispose();
                 });
+                return listener;
             },
         };
     }
