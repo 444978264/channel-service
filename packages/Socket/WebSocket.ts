@@ -76,9 +76,7 @@ export class SocketCore {
             this._socket = null;
             if (this._config.autoReconnect) {
                 setTimeout(() => {
-                    this._retryCount++;
-                    this.hooks.emit(SOCKET_STATUS.reconnect, this._retryCount);
-                    this.connect();
+                    this.connect(true);
                 }, this._config.duration || DEFAULT_CONFIG.duration);
             }
         });
@@ -164,20 +162,27 @@ export class SocketCore {
         });
     }
 
-    connect() {
+    connect(isRetry?: boolean) {
         this._catchError(() => {
+            if (this._socket) return;
+
             const maxRetry = this._config.maxRetry ?? DEFAULT_CONFIG.maxRetry;
-            if (this._socket === null && this._retryCount <= maxRetry) {
-                this._socket =
-                    this._config.adapter?.(this._url) ??
-                    new WebSocket(this._url);
-                this._listen(this._socket);
-                this.hooks.emit(SOCKET_STATUS.connecting);
-            } else {
-                throw new ReconnectTimeError(
-                    'The number of retry connections has reached the limit，please check your network',
-                );
+
+            if (isRetry) {
+                if (this._retryCount < maxRetry) {
+                    this._retryCount++;
+                    this.hooks.emit(SOCKET_STATUS.reconnect, this._retryCount);
+                } else {
+                    throw new ReconnectTimeError(
+                        'The number of retry connections has reached the limit，please check your network',
+                    );
+                }
             }
+
+            this._socket =
+                this._config.adapter?.(this._url) ?? new WebSocket(this._url);
+            this._listen(this._socket);
+            this.hooks.emit(SOCKET_STATUS.connecting);
         });
         return this;
     }
