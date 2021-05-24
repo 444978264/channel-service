@@ -35,6 +35,7 @@ export interface ISocketCoreConfig {
     duration?: number;
     maxRetry?: number;
     resultSelector?(e: any): any;
+    requestSelector?(e: any): any;
     adapter?<T extends IAdapter>(url: string): T;
 }
 
@@ -45,6 +46,9 @@ const DEFAULT_CONFIG = {
     duration: 3000,
     resultSelector(d: string) {
         return JSON.parse(d);
+    },
+    requestSelector(d: string) {
+        return JSON.stringify(d);
     },
 };
 
@@ -85,7 +89,11 @@ export class SocketCore {
     }
 
     private resultSelector(d: string) {
-        return JSON.parse(d);
+        return this._config.resultSelector?.(d) || JSON.parse(d);
+    }
+
+    private requestSelector(d: string) {
+        return this._config.requestSelector?.(d) || JSON.stringify(d);
     }
 
     private _listen(instance: IAdapter) {
@@ -120,9 +128,7 @@ export class SocketCore {
     };
 
     private _message = (e: MessageEvent) => {
-        const data =
-            this._config.resultSelector?.(e.data) ||
-            this.resultSelector(e.data);
+        const data = this.resultSelector(e.data);
         if (this.hooks.get(SOCKET_STATUS.beforeMessage)) {
             this.hooks.emit(SOCKET_STATUS.beforeMessage, {
                 data,
@@ -154,10 +160,12 @@ export class SocketCore {
                 const res = {...params};
                 this.hooks.emit(SOCKET_STATUS.beforeSend, {
                     data: res,
-                    next: (d = res) => this._socket?.send(d),
+                    next: (d = res) => {
+                        this._socket?.send(this.requestSelector(d));
+                    },
                 });
             } else {
-                this._socket?.send(params);
+                this._socket?.send(this.requestSelector(params));
             }
         });
     }

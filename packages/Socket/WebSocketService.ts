@@ -63,7 +63,7 @@ export class SocketService extends Service {
     }
 
     private _send(params: any) {
-        this._sender.send(JSON.stringify(params));
+        this._sender.send(params);
     }
 
     public send(params: any): Event {
