@@ -21,7 +21,7 @@
         "watch": "rollup -c -w",
         "build": "rollup -c",
         "build:types": "tsc",
-        "release": "cross-env NODE_ENV=production yarn build:types && yarn build && npm publish",
+        "release": "cross-env NODE_ENV=production yarn build:types && yarn build",
         "start": "cross-env NODE_ENV=development rollup -c -w",
         "test": "jest",
         "lint": "eslint --fix utils/*",
