@@ -7,6 +7,7 @@ import {terser} from 'rollup-plugin-terser';
 import serve from 'rollup-plugin-serve';
 import livereload from 'rollup-plugin-livereload';
 import babel from 'rollup-plugin-babel';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 import pkg from './package.json';
 
 const footer = `
@@ -56,10 +57,13 @@ export default {
         // typescript({
         //     useTsconfigDeclarationDir: true,
         // }),
+        resolve(),
         commonjs({
             include: 'node_modules/**/*',
         }),
-        resolve(),
+
+        nodePolyfills(),
+
         terser({
             // compress: {
             //     pure_funcs: ['console.log'],
