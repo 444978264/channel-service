@@ -8,20 +8,21 @@
     </head>
     <body></body>
     <script src="../dist/bundle.browser.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
     <script>
         const {
             SocketService,
             CancelTokenFactory,
             TimeOutError,
             ReconnectTimeError,
+            axiosInstance,
         } = window.channelService;
 
         const socket = SocketService.create(
             'wss://api-dev.bitcharm.com/ws/api/v1',
             {maxRetry: 0},
         );
-
+        console.log(axiosInstance, 'axiosInstance');
         // const socket = SocketService.create(
         //     'wss://fstream.binance.com/stream',
         //     {
