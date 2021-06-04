@@ -15,14 +15,16 @@
             CancelTokenFactory,
             TimeOutError,
             ReconnectTimeError,
-            axiosInstance,
+            serviceInit,
         } = window.channelService;
+
+        const instance = serviceInit();
+        console.log(instance, 'instance');
 
         const socket = SocketService.create(
             'wss://api-dev.bitcharm.com/ws/api/v1',
             {maxRetry: 0},
         );
-        console.log(axiosInstance, 'axiosInstance');
         // const socket = SocketService.create(
         //     'wss://fstream.binance.com/stream',
         //     {

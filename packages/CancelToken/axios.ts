@@ -53,6 +53,12 @@ interface IWithCancelToken {
     <T = any>(params: AxiosRequestConfig): Promise<T>;
 }
 
+type IResolveItem<T> = {
+    then: Promise<T>['then'];
+    finally: Promise<T>['finally'];
+    catch: Promise<T>['catch'];
+} & Omit<ICancelToken, 'token'>;
+
 class Core implements IDispose {
     public get = <T = any>(
         url: string,
@@ -80,31 +86,57 @@ class Core implements IDispose {
         });
     };
 
+    private _unResolvePromise = new Map<string, IResolveItem<any>>();
+
     constructor(
         private _instance: AxiosInstance,
         public readonly tokenFactory: CancelTokenFactory,
     ) {}
 
     public withCancel<T>(request: IWithCancelToken) {
-        return ({cancelToken, ...rest}: AxiosRequestConfig) => {
+        return ({
+            cancelToken,
+            ...rest
+        }: AxiosRequestConfig): IResolveItem<T> => {
+            const hash = this._toHash(rest);
+
+            if (this._unResolvePromise.has(hash)) {
+                return this._unResolvePromise.get(hash)!;
+            }
+
             const {token, ...other} = this.tokenFactory.create();
 
             const promise = request<T>({
                 ...rest,
                 cancelToken: token,
+            }).finally(() => {
+                if (this._unResolvePromise.has(hash)) {
+                    this._unResolvePromise.delete(hash);
+                }
+                other.dispose();
             });
-            return {
+
+            const result = {
                 then: promise.then.bind(promise),
-                finally: (callback?: () => any) => {
-                    return promise.finally(() => {
-                        callback && callback();
-                        other.dispose();
-                    });
-                },
+                finally: promise.finally.bind(promise),
                 catch: promise.catch.bind(promise),
                 ...other,
             };
+
+            this._unResolvePromise.set(hash, result);
+
+            return result;
         };
+    }
+
+    private _toHash(config: AxiosRequestConfig) {
+        const {url, params, data} = config;
+        const urlSearch = new URLSearchParams({
+            ...params,
+            ...data,
+        });
+        urlSearch.sort();
+        return `${url}#${urlSearch.toString()}`;
     }
 
     public dispose() {
@@ -112,6 +144,8 @@ class Core implements IDispose {
     }
 }
 
-export function serviceInit(instance: AxiosInstance) {
-    return new Core(instance, new CancelTokenFactory());
+export const TokenFactory = new CancelTokenFactory();
+
+export function serviceInit(instance: AxiosInstance = axios.create()) {
+    return new Core(instance, TokenFactory);
 }
