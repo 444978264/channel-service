@@ -1,4 +1,5 @@
-import {EventEmitter} from '../../utils/event';
+import {match, MatchFunction} from 'path-to-regexp';
+import {EventEmitter, IMiddleware, Middleware} from '../../utils';
 import {ReconnectTimeError} from './Error';
 
 export enum SOCKET_STATUS {
@@ -37,6 +38,7 @@ export interface ISocketCoreConfig {
     resultSelector?(e: any): any;
     requestSelector?(e: any): any;
     adapter?<T extends IAdapter>(url: string): T;
+    middlewareInterceptor?(): void;
 }
 
 const DEFAULT_CONFIG = {
@@ -62,6 +64,10 @@ export class SocketCore {
     private _retryCount = 0;
     private _onReadyHandle: (() => any)[] = [];
     public readonly hooks = new EventEmitter<SOCKET_STATUS>();
+    private _middlewareQueue: {
+        match: MatchFunction;
+        middleware: Middleware<SocketCore>;
+    }[] = [];
     constructor(private _url: string, _config?: ISocketCoreConfig) {
         this._config = {
             ...DEFAULT_CONFIG,
@@ -214,5 +220,15 @@ export class SocketCore {
         } catch (error) {
             this.hooks.emit(SOCKET_STATUS.error, error);
         }
+    }
+
+    use(path: string, callback: IMiddleware<SocketCore>) {
+        const middleware = new Middleware<SocketCore>();
+        middleware.use(callback);
+        this._middlewareQueue.push({
+            match: match(path, {decode: decodeURIComponent}),
+            middleware,
+        });
+        return this;
     }
 }
