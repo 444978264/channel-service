@@ -116,11 +116,28 @@ export class SocketCore {
     };
 
     private _message = (e: MessageEvent) => {
-        const context = {service: this, data: e.data};
+        const context = this._context(e.data);
         this.interceptors.response.start(context, () => {
             this.hooks.emit(SOCKET_STATUS.message, context.data);
         });
     };
+
+    private _context(value: any) {
+        return Object.defineProperties(
+            {},
+            {
+                service: {
+                    value: this,
+                    writable: false,
+                    configurable: false,
+                },
+                data: {
+                    value,
+                    enumerable: true,
+                },
+            },
+        );
+    }
 
     private _close = (e: CloseEvent) => {
         this.hooks.emit(SOCKET_STATUS.disconnect, e);
@@ -135,7 +152,7 @@ export class SocketCore {
             this.connect();
         }
         this._onReady(() => {
-            const context = {service: this, data: {...params}};
+            const context = this._context({...params});
             this.interceptors.request.start(context, () => {
                 this._socket?.send(context.data);
             });
