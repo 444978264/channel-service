@@ -26,3 +26,12 @@ export class ReconnectTimeError extends BaseError {
         super(message, 'ReconnectTimeError');
     }
 }
+
+export class InterceptorError extends BaseError {
+    public static is(err: any) {
+        return err instanceof InterceptorError;
+    }
+    constructor(public message: string, public data: any) {
+        super(message, 'InterceptorError');
+    }
+}

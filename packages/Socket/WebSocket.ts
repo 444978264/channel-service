@@ -1,8 +1,7 @@
 import {EventEmitter, Middleware} from '../../utils';
-import {ReconnectTimeError} from './Error';
+import {InterceptorError, ReconnectTimeError} from './Error';
 
 export enum SOCKET_STATUS {
-    beforeSend = 'beforeSend',
     connect = 'connect',
     disconnect = 'disconnect',
     error = 'error',
@@ -153,15 +152,21 @@ export class SocketCore {
         this.hooks.emit(SOCKET_STATUS.error, e);
     };
 
-    public send(params: any) {
+    public send(params: any, fail?: (error: InterceptorError) => void) {
         if (!this._socket) {
             this.connect();
         }
         this._onReady(() => {
             const context = this._context({...params});
-            this.interceptors.request.start(context, () => {
-                this._socket?.send(context.data);
-            });
+            this.interceptors.request.start(
+                context,
+                () => {
+                    this._socket?.send(context.data);
+                },
+                (ctx, reason = '') => {
+                    fail && fail(new InterceptorError(reason, ctx.data));
+                },
+            );
         });
     }
 
