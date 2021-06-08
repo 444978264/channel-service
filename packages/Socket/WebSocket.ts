@@ -36,6 +36,11 @@ export interface ISocketCoreConfig {
     adapter?<T extends IAdapter>(url: string): T;
 }
 
+export interface IInterceptorMiddleware<T = any> {
+    service: SocketCore;
+    data: T;
+}
+
 const DEFAULT_CONFIG = {
     autoReconnect: true,
     autoConnect: true,
@@ -54,8 +59,8 @@ export class SocketCore {
     private _onReadyHandle: (() => any)[] = [];
     public readonly hooks = new EventEmitter<SOCKET_STATUS>();
     public readonly interceptors = {
-        request: new Middleware<{service: SocketCore; data: any}>(),
-        response: new Middleware<{service: SocketCore; data: any}>(),
+        request: new Middleware<IInterceptorMiddleware>(),
+        response: new Middleware<IInterceptorMiddleware>(),
     };
 
     constructor(private _url: string, _config?: ISocketCoreConfig) {
@@ -134,6 +139,7 @@ export class SocketCore {
                 data: {
                     value,
                     enumerable: true,
+                    writable: true,
                 },
             },
         );
