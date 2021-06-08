@@ -23,7 +23,7 @@ export class Middleware<T = any> {
         return this;
     };
 
-    public use(middleware: IMiddleware | Middleware) {
+    public use(middleware: IMiddleware<T> | Middleware<T>) {
         if (middleware instanceof Middleware) {
             this._middleware.push(middleware.start);
         } else {
