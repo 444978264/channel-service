@@ -1,21 +1,25 @@
 export interface IMiddleware<T = any> {
-    (ctx: T, next: (params: any) => void): void;
+    (ctx: T, next: (final?: boolean, reason?: any) => void): void;
 }
 
 export class Middleware<T = any> {
     private _middleware: IMiddleware[] = [];
 
-    public start = (ctx: T, done: (data?: boolean) => void) => {
+    public start = (
+        ctx: T,
+        success: (final?: boolean) => void,
+        fail?: (ctx: T, reason?: any) => void,
+    ) => {
         let idx = 0;
         const len = this._middleware.length;
-        const next = (final?: boolean) => {
-            if (!final) return;
-            if (idx >= len && final) return done(true);
+        const next = (final = true, reason?: any) => {
+            if (!final) return fail && fail(ctx, reason);
+            if (idx >= len && final) return success(true);
             const fn = this._middleware[idx];
             idx++;
-            fn(ctx, (res = final) => next(res));
+            fn(ctx, next);
         };
-        next(true);
+        next();
         return this;
     };
 
