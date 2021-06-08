@@ -15,24 +15,27 @@
             CancelTokenFactory,
             TimeOutError,
             ReconnectTimeError,
+            Middleware,
         } = window.channelService;
 
         const socket = SocketService.create(
-            'wss://api-dev.bitcharm.com/ws/api/v1',
-            {maxRetry: 0},
+            'wss://fstream.binance.com/stream',
+            {
+                autoConnect: true,
+            },
         );
 
-        // const socket = SocketService.create(
-        //     'wss://fstream.binance.com/stream',
-        //     {
-        //         autoConnect: true,
-        //         adapter(url) {
-        //             console.log(url, 'adapter');
-        //             return new WebSocket(url);
-        //         },
-        //     },
-        // );
+        socket.interceptors.request.use(function (ctx, next) {
+            ctx.data = JSON.stringify(ctx.data);
+            next();
+        });
 
+        socket.interceptors.response.use(function (ctx, next) {
+            ctx.data = JSON.parse(ctx.data);
+            next();
+        });
+
+        console.log(socket, 'socket');
         socket.onConnect(function () {
             console.log('网络连接成功');
         });
@@ -53,34 +56,34 @@
             console.log(ReconnectTimeError.is(err), err);
         });
 
-        // socket
-        //     .once(
-        //         {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
-        //         d => d.id === '2',
-        //     )
-        //     .subscribe(function (res) {
-        //         console.log(res, 'once');
-        //     });
+        socket
+            .once(
+                {method: 'SUBSCRIBE', params: ['!miniTicker@arr'], id: 2},
+                d => d.id === '2',
+            )
+            .subscribe(function (res) {
+                console.log(res, 'once');
+            });
 
-        // socket
-        //     .on({
-        //         subMsg: {
-        //             method: 'SUBSCRIBE',
-        //             params: ['ltcusdt@kline_1d'],
-        //             id: 1,
-        //         },
-        //         filter(d) {
-        //             return d.stream === 'ltcusdt@kline_1d';
-        //         },
-        //         unsubMsg: {
-        //             method: 'UNSUBSCRIBE',
-        //             params: ['ltcusdt@kline_1d'],
-        //             id: 4,
-        //         },
-        //     })
-        //     .subscribe(function (d) {
-        //         console.log(d, 'subscribe');
-        //     });
+        socket
+            .on({
+                subMsg: {
+                    method: 'SUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 1,
+                },
+                filter(d) {
+                    return d.stream === 'ltcusdt@kline_1d';
+                },
+                unsubMsg: {
+                    method: 'UNSUBSCRIBE',
+                    params: ['ltcusdt@kline_1d'],
+                    id: 4,
+                },
+            })
+            .subscribe(function (d) {
+                console.log(d, 'subscribe');
+            });
 
         // const cancelTokenFactory = CancelTokenFactory.create(function () {
         //     const source = axios.CancelToken.source();
@@ -150,5 +153,46 @@
         //     cancelTokenFactory,
         //     'CancelTokenFactory',
         // );
+
+        // const middleware = new Middleware();
+        // const middleware2 = new Middleware();
+
+        // middleware
+        //     .use(function (ctx, next) {
+        //         setTimeout(() => {
+        //             console.log('middleware1', 1);
+        //             next();
+        //         }, 1500);
+        //     })
+        //     .use(function (ctx, next) {
+        //         setTimeout(() => {
+        //             console.log('middleware1', 2);
+        //             next();
+        //         }, 1500);
+        //     });
+
+        // middleware2
+        //     .use(function (ctx, next) {
+        //         setTimeout(() => {
+        //             console.log(ctx, 'middleware2', 1);
+        //             next();
+        //         }, 1000);
+        //     })
+        //     .use(function (ctx, next) {
+        //         setTimeout(() => {
+        //             console.log(ctx, 'middleware2', 2);
+        //             next();
+        //         }, 1000);
+        //     })
+        //     .use(middleware)
+        //     .use(function (ctx, next) {
+        //         setTimeout(() => {
+        //             console.log(ctx, 'middleware2', 3);
+        //             next();
+        //         }, 1000);
+        //     });
+        // middleware2.start('chenyifang', final => {
+        //     console.log('run completed');
+        // });
     </script>
 </html>

@@ -17,6 +17,12 @@ export class SocketService extends Service {
         private _opt: ISocketServiceConfig = {},
     ) {
         super();
+        Object.defineProperty(this, 'interceptors', {
+            enumerable: true,
+            get() {
+                return this._sender.interceptors;
+            },
+        });
     }
 
     static create(url: string, opts?: ISocketCoreConfig) {

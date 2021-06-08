@@ -1,9 +1,8 @@
-import {EventEmitter} from '../../utils/event';
+import {EventEmitter, Middleware} from '../../utils';
 import {ReconnectTimeError} from './Error';
 
 export enum SOCKET_STATUS {
     beforeSend = 'beforeSend',
-    beforeMessage = 'beforeMessage',
     connect = 'connect',
     disconnect = 'disconnect',
     error = 'error',
@@ -34,8 +33,6 @@ export interface ISocketCoreConfig {
     autoConnect?: boolean;
     duration?: number;
     maxRetry?: number;
-    resultSelector?(e: any): any;
-    requestSelector?(e: any): any;
     adapter?<T extends IAdapter>(url: string): T;
 }
 
@@ -44,12 +41,6 @@ const DEFAULT_CONFIG = {
     autoConnect: true,
     maxRetry: 5,
     duration: 3000,
-    resultSelector(d: string) {
-        return JSON.parse(d);
-    },
-    requestSelector(d: string) {
-        return JSON.stringify(d);
-    },
 };
 
 export class SocketCore {
@@ -62,6 +53,11 @@ export class SocketCore {
     private _retryCount = 0;
     private _onReadyHandle: (() => any)[] = [];
     public readonly hooks = new EventEmitter<SOCKET_STATUS>();
+    public readonly interceptors = {
+        request: new Middleware<{service: SocketCore; data: any}>(),
+        response: new Middleware<{service: SocketCore; data: any}>(),
+    };
+
     constructor(private _url: string, _config?: ISocketCoreConfig) {
         this._config = {
             ...DEFAULT_CONFIG,
@@ -86,14 +82,6 @@ export class SocketCore {
         });
 
         this._config.autoConnect && this.connect();
-    }
-
-    private resultSelector(d: string) {
-        return this._config.resultSelector?.(d) || JSON.parse(d);
-    }
-
-    private requestSelector(d: string) {
-        return this._config.requestSelector?.(d) || JSON.stringify(d);
     }
 
     private _listen(instance: IAdapter) {
@@ -128,19 +116,10 @@ export class SocketCore {
     };
 
     private _message = (e: MessageEvent) => {
-        const data = this.resultSelector(e.data);
-        if (this.hooks.get(SOCKET_STATUS.beforeMessage)) {
-            this.hooks.emit(SOCKET_STATUS.beforeMessage, {
-                data,
-                next: this.hooks.emit.bind(
-                    this.hooks,
-                    SOCKET_STATUS.message,
-                    data,
-                ),
-            });
-        } else {
-            this.hooks.emit(SOCKET_STATUS.message, data);
-        }
+        const context = {service: this, data: e.data};
+        this.interceptors.response.start(context, () => {
+            this.hooks.emit(SOCKET_STATUS.message, context.data);
+        });
     };
 
     private _close = (e: CloseEvent) => {
@@ -156,17 +135,10 @@ export class SocketCore {
             this.connect();
         }
         this._onReady(() => {
-            if (this.hooks.get(SOCKET_STATUS.beforeSend)) {
-                const res = {...params};
-                this.hooks.emit(SOCKET_STATUS.beforeSend, {
-                    data: res,
-                    next: (d = res) => {
-                        this._socket?.send(this.requestSelector(d));
-                    },
-                });
-            } else {
-                this._socket?.send(this.requestSelector(params));
-            }
+            const context = {service: this, data: {...params}};
+            this.interceptors.request.start(context, () => {
+                this._socket?.send(context.data);
+            });
         });
     }
 
