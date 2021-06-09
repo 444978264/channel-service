@@ -7,7 +7,7 @@ export interface IMiddleware<T = any> {
 }
 
 export class Middleware<T = any> {
-    private _middleware: IMiddleware[] = [];
+    private _middleware: (IMiddleware | Middleware)[] = [];
 
     public start = (
         ctx: T,
@@ -19,20 +19,20 @@ export class Middleware<T = any> {
         const next = (final = true, reason?: any) => {
             if (!final) return fail && fail(ctx, reason);
             if (idx >= len && final) return success(true);
-            const fn = this._middleware[idx];
+            const middleware = this._middleware[idx];
             idx++;
-            fn(ctx, next);
+            if (middleware instanceof Middleware) {
+                middleware.start(ctx, next, fail);
+            } else {
+                middleware(ctx, next);
+            }
         };
         next();
         return this;
     };
 
     public use(middleware: IMiddleware<T> | Middleware<T>) {
-        if (middleware instanceof Middleware) {
-            this._middleware.push(middleware.start);
-        } else {
-            this._middleware.push(middleware);
-        }
+        this._middleware.push(middleware);
         return this;
     }
 
