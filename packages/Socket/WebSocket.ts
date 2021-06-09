@@ -8,6 +8,7 @@ export enum SOCKET_STATUS {
     reconnect = 'reconnect',
     connecting = 'connecting',
     message = 'message',
+    interceptorError = 'interceptorError',
 }
 
 export enum ADAPTER_STATUS {
@@ -121,9 +122,18 @@ export class SocketCore {
 
     private _message = (e: MessageEvent) => {
         const context = this._context(e.data);
-        this.interceptors.response.start(context, () => {
-            this.hooks.emit(SOCKET_STATUS.message, context.data);
-        });
+        this.interceptors.response.start(
+            context,
+            () => {
+                this.hooks.emit(SOCKET_STATUS.message, context.data);
+            },
+            (ctx, reason) => {
+                this.hooks.emit(
+                    SOCKET_STATUS.interceptorError,
+                    new InterceptorError(reason, ctx.data),
+                );
+            },
+        );
     };
 
     private _context(value: any) {
@@ -152,7 +162,7 @@ export class SocketCore {
         this.hooks.emit(SOCKET_STATUS.error, e);
     };
 
-    public send(params: any, fail?: (error: InterceptorError) => void) {
+    public send(params: any) {
         if (!this._socket) {
             this.connect();
         }
@@ -164,7 +174,10 @@ export class SocketCore {
                     this._socket?.send(context.data);
                 },
                 (ctx, reason = '') => {
-                    fail && fail(new InterceptorError(reason, ctx.data));
+                    this.hooks.emit(
+                        SOCKET_STATUS.interceptorError,
+                        new InterceptorError(reason, ctx.data),
+                    );
                 },
             );
         });
