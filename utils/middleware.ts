@@ -1,5 +1,9 @@
+export interface INext {
+    (final?: boolean, reason?: any): void;
+}
+
 export interface IMiddleware<T = any> {
-    (ctx: T, next: (final?: boolean, reason?: any) => void): void;
+    (ctx: T, next: INext): void;
 }
 
 export class Middleware<T = any> {
@@ -29,6 +33,12 @@ export class Middleware<T = any> {
         } else {
             this._middleware.push(middleware);
         }
+        return this;
+    }
+
+    public eject(callback: IMiddleware) {
+        const idx = this._middleware.indexOf(callback);
+        if (idx > -1) this._middleware.splice(idx, 1);
         return this;
     }
 }
