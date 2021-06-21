@@ -120,35 +120,6 @@ export class SocketCore {
         this.hooks.emit(SOCKET_STATUS.connect);
     };
 
-    private _emitInterceptorError(reason: string, data: any) {
-        this._catchError(
-            () => {
-                throw new InterceptorError(reason, data);
-            },
-            err => {
-                this.hooks.emit(SOCKET_STATUS.interceptorError, err);
-            },
-        );
-    }
-
-    public send(params: any) {
-        if (!this._socket) {
-            this.connect();
-        }
-        this._onReady(() => {
-            const context = this._context({...params});
-            this.interceptors.request.start(
-                context,
-                () => {
-                    this._socket?.send(context.data);
-                },
-                (ctx, reason) => {
-                    this._emitInterceptorError(reason, ctx.data);
-                },
-            );
-        });
-    }
-
     private _message = (e: MessageEvent) => {
         const context = this._context(e.data);
         this.interceptors.response.start(
@@ -157,7 +128,10 @@ export class SocketCore {
                 this.hooks.emit(SOCKET_STATUS.message, context.data);
             },
             (ctx, reason) => {
-                this._emitInterceptorError(reason, ctx.data);
+                this.hooks.emit(
+                    SOCKET_STATUS.interceptorError,
+                    new InterceptorError(reason, ctx.data),
+                );
             },
         );
     };
@@ -177,7 +151,7 @@ export class SocketCore {
                     writable: true,
                 },
             },
-        ) as IInterceptorMiddleware;
+        );
     }
 
     private _close = (e: CloseEvent) => {
@@ -188,38 +162,49 @@ export class SocketCore {
         this.hooks.emit(SOCKET_STATUS.error, e);
     };
 
+    public send(params: any) {
+        if (!this._socket) {
+            this.connect();
+        }
+        this._onReady(() => {
+            const context = this._context({...params});
+            this.interceptors.request.start(
+                context,
+                () => {
+                    this._socket?.send(context.data);
+                },
+                (ctx, reason = '') => {
+                    this.hooks.emit(
+                        SOCKET_STATUS.interceptorError,
+                        new InterceptorError(reason, ctx.data),
+                    );
+                },
+            );
+        });
+    }
+
     connect(isRetry?: boolean) {
-        this._catchError(
-            () => {
-                if (this._socket) return;
+        this._catchError(() => {
+            if (this._socket) return;
 
-                const maxRetry =
-                    this._config.maxRetry ?? DEFAULT_CONFIG.maxRetry;
+            const maxRetry = this._config.maxRetry ?? DEFAULT_CONFIG.maxRetry;
 
-                if (isRetry) {
-                    if (this._retryCount < maxRetry) {
-                        this._retryCount++;
-                        this.hooks.emit(
-                            SOCKET_STATUS.reconnect,
-                            this._retryCount,
-                        );
-                    } else {
-                        throw new ReconnectTimeError(
-                            'The number of retry connections has reached the limit，please check your network',
-                        );
-                    }
+            if (isRetry) {
+                if (this._retryCount < maxRetry) {
+                    this._retryCount++;
+                    this.hooks.emit(SOCKET_STATUS.reconnect, this._retryCount);
+                } else {
+                    throw new ReconnectTimeError(
+                        'The number of retry connections has reached the limit，please check your network',
+                    );
                 }
+            }
 
-                this._socket =
-                    this._config.adapter?.(this._url) ??
-                    new WebSocket(this._url);
-                this._listen(this._socket);
-                this.hooks.emit(SOCKET_STATUS.connecting);
-            },
-            err => {
-                this.hooks.emit(SOCKET_STATUS.error, err);
-            },
-        );
+            this._socket =
+                this._config.adapter?.(this._url) ?? new WebSocket(this._url);
+            this._listen(this._socket);
+            this.hooks.emit(SOCKET_STATUS.connecting);
+        });
         return this;
     }
 
@@ -236,14 +221,11 @@ export class SocketCore {
         return this;
     }
 
-    private _catchError(
-        callback: (...args: any[]) => any,
-        catchCallback: (err: Error) => void,
-    ) {
+    private _catchError(callback: (...args: any[]) => any) {
         try {
             callback();
         } catch (error) {
-            catchCallback(error);
+            this.hooks.emit(SOCKET_STATUS.error, error);
         }
     }
 }
