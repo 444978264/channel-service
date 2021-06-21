@@ -151,7 +151,7 @@ export class SocketCore {
                     writable: true,
                 },
             },
-        );
+        ) as IInterceptorMiddleware;
     }
 
     private _close = (e: CloseEvent) => {
