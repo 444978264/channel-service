@@ -28,11 +28,11 @@ export class ReconnectTimeError extends BaseError {
     }
 }
 
-export class InterceptorError extends BaseError {
+export class InterceptorError<T = any> extends BaseError {
     public static is(err: any): err is InterceptorError {
         return err.name === 'InterceptorError' && err.__ERROR__;
     }
-    constructor(public message: string, public data: any) {
+    constructor(public message: string, public data: T) {
         super(message, 'InterceptorError');
     }
 }
