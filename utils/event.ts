@@ -7,7 +7,7 @@ export type IDisposables = Set<IDispose>;
 export type Event<T = any> = (
     listener: (e: T) => any,
     thisArgs?: any,
-    disposables?: any,
+    disposables?: IDisposables,
 ) => IDispose;
 
 export interface ISender<T = any> {
