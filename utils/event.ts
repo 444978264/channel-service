@@ -51,13 +51,14 @@ export namespace Event {
     }
 
     export function snapshot<T>(event: Event<T>): Event<T> {
-        let listener: IDispose;
+        let listener: IDispose | null;
         const emitter = new Emitter<T>({
             onFirstAdd() {
                 listener = event(emitter.fire, emitter);
             },
             onLastRemove() {
-                listener.dispose();
+                listener?.dispose();
+                listener = null;
             },
         });
         return emitter.event;
@@ -157,7 +158,8 @@ export class Emitter<T> implements IDispose {
 }
 
 export class EventEmitter<T extends string | number | symbol>
-    implements IDispose {
+    implements IDispose
+{
     private _eventMap = {} as Record<T, Emitter<any>>;
     private _disposables = new Set<IDispose>();
 
